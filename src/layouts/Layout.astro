@@ -187,7 +187,43 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
           </div>
         </div>
         
-        <nav class="flex flex-col gap-2 mt-4 px-2" style="color: var(--brand-app-bg, #053332);">
+        <div class="space-y-6 mt-4">
+          <!-- Botón instalar Android -->
+          <div id="install-android" style="display:none;" class="px-2">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-3 text-center">Instalar app</p>
+            <button id="install-btn"
+                    class="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95 hover:opacity-90"
+                    style="background: var(--brand-nav-icon-active, #f59e0b); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Instalar en Android
+            </button>
+          </div>
+
+          <!-- Guía instalar iOS -->
+          <div id="install-ios" style="display:none;" class="px-2">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Instalar en iPhone</p>
+            <div class="rounded-2xl p-4 space-y-3 text-sm" style="background: rgba(0,0,0,0.2);">
+              <div class="flex items-start gap-3">
+                <span class="text-xl shrink-0">1️⃣</span>
+                <p style="color: var(--brand-nav-text, #d1d5db);">Toca el botón <strong>Compartir</strong> <span class="inline-block">&#x1F4E4;</span> en Safari</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-xl shrink-0">2️⃣</span>
+                <p style="color: var(--brand-nav-text, #d1d5db);">Selecciona <strong>“Añadir a inicio”</strong></p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-xl shrink-0">3️⃣</span>
+                <p style="color: var(--brand-nav-text, #d1d5db);">Toca <strong>“Añadir”</strong> en la esquina superior derecha</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-t border-[var(--border-subtle)] my-2 opacity-50" />
+
+        <nav class="flex flex-col gap-2 px-2" style="color: var(--brand-app-bg, #053332);">
           <a href="/" class={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-colors ${page === 'home' ? 'bg-black/5 text-[var(--brand-nav-icon-active,#f59e0b)]' : 'hover:bg-black/5'}`}>
             <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -220,42 +256,6 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
             <span class="font-semibold text-sm">Calendario</span>
           </a>
         </nav>
-        
-        <hr class="border-t border-[var(--border-subtle)] my-2 opacity-50" />
-
-        <div class="space-y-6">
-          <!-- Botón instalar Android -->
-          <div id="install-android" style="display:none;" class="mt-4 px-2">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-3 text-center">Instalar app</p>
-            <button id="install-btn"
-                    class="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95 hover:opacity-90"
-                    style="background: var(--brand-nav-icon-active, #f59e0b); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
-              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Instalar en Android
-            </button>
-          </div>
-
-          <!-- Guía instalar iOS -->
-          <div id="install-ios" style="display:none;">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Instalar en iPhone</p>
-            <div class="rounded-2xl p-4 space-y-3 text-sm" style="background: rgba(0,0,0,0.2);">
-              <div class="flex items-start gap-3">
-                <span class="text-xl shrink-0">1️⃣</span>
-                <p style="color: var(--brand-nav-text, #d1d5db);">Toca el botón <strong>Compartir</strong> <span class="inline-block">&#x1F4E4;</span> en Safari</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <span class="text-xl shrink-0">2️⃣</span>
-                <p style="color: var(--brand-nav-text, #d1d5db);">Selecciona <strong>“Añadir a inicio”</strong></p>
-              </div>
-              <div class="flex items-start gap-3">
-                <span class="text-xl shrink-0">3️⃣</span>
-                <p style="color: var(--brand-nav-text, #d1d5db);">Toca <strong>“Añadir”</strong> en la esquina superior derecha</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
       </div>
 

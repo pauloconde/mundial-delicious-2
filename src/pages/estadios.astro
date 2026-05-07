@@ -6,6 +6,7 @@ const data = await fetchWorldCupData();
 
 const venuesWithMatches = VENUES.map(v => {
   const matches = data.matches.filter(m => m.ground === v.cityEn);
+  matches.sort((a, b) => new Date(getMatchUTC(a)).getTime() - new Date(getMatchUTC(b)).getTime());
   return { ...v, matches };
 });
 
