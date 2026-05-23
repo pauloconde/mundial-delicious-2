@@ -91,7 +91,7 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
     <!-- ── Splash Screen ── -->
     <div
       id="splash"
-      class="fixed inset-0 z-[9999] flex flex-col"
+      class="fixed inset-0 z-[9999] flex flex-col animate-[splash-fade_2.2s_ease-in-out_forwards]"
       style="background: var(--brand-splash-bg);"
     >
       <!-- Logo FIFA — centrado en el espacio disponible -->
@@ -106,6 +106,118 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
              class="h-64 w-auto max-w-[60vw] object-contain" />
       </div>
     </div>
+
+    <!-- ── Full-Screen Rotating Banners ── -->
+    {sponsorInfo.showBanner && (
+      <div
+        id="page-banner"
+        class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+      >
+        <!-- Banner Container Wrapper (Constrained to App's max-w-lg width) -->
+        <div class="relative w-full max-w-lg h-full flex flex-col items-center justify-center bg-black">
+          <!-- Banner Image -->
+          <img
+            id="page-banner-img"
+            src=""
+            alt="Publicidad"
+            class="w-full h-full object-cover"
+          />
+
+          <!-- Manual Close Button (X) -->
+          <button
+            id="page-banner-close"
+            class="absolute top-4 right-4 z-[10000] flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white backdrop-blur-md border border-white/20 transition-all hover:bg-black/80 active:scale-95 cursor-pointer"
+            aria-label="Cerrar publicidad"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    )}
+
+    <!-- ── Script: Control de Splash & Banners en Navegación ── -->
+    <script is:inline define:vars={{
+      showBanner: sponsorInfo.showBanner,
+      bannerUrls: [
+        sponsorInfo.banner1url,
+        sponsorInfo.banner2url,
+        sponsorInfo.banner3url,
+        sponsorInfo.banner4url,
+        sponsorInfo.banner5url
+      ].filter(Boolean),
+      bannerDuration: sponsorInfo.bannerDuration !== undefined ? sponsorInfo.bannerDuration : 0
+    }}>
+      (function () {
+        const isColdStart = !sessionStorage.getItem('app_initialized');
+        sessionStorage.setItem('app_initialized', 'true');
+
+        const splash = document.getElementById('splash');
+        const bannerContainer = document.getElementById('page-banner');
+        const bannerImg = document.getElementById('page-banner-img');
+        const closeBtn = document.getElementById('page-banner-close');
+
+        if (isColdStart) {
+          // Cold start: show original splash, hide banner container
+          if (bannerContainer) bannerContainer.style.display = 'none';
+          if (splash) {
+            splash.style.display = 'flex';
+          }
+        } else {
+          // Subsequent page navigation
+          if (showBanner && bannerUrls && bannerUrls.length > 0) {
+            // Hide splash immediately to prevent flashing
+            if (splash) splash.style.display = 'none';
+
+            // Show banner
+            if (bannerContainer && bannerImg) {
+              // Rotate banners using sessionStorage index
+              let currentIndex = parseInt(sessionStorage.getItem('banner_index') || '0');
+              if (isNaN(currentIndex) || currentIndex >= bannerUrls.length) {
+                currentIndex = 0;
+              }
+              const currentBannerUrl = bannerUrls[currentIndex];
+              
+              bannerImg.src = currentBannerUrl;
+              
+              const nextIndex = (currentIndex + 1) % bannerUrls.length;
+              sessionStorage.setItem('banner_index', nextIndex.toString());
+
+              bannerContainer.style.display = 'flex';
+              requestAnimationFrame(function () {
+                bannerContainer.style.opacity = '1';
+              });
+
+              let autoCloseTimer = null;
+              
+              function closeBanner() {
+                if (autoCloseTimer) clearTimeout(autoCloseTimer);
+                bannerContainer.style.opacity = '0';
+                setTimeout(function () {
+                  bannerContainer.style.display = 'none';
+                }, 300);
+              }
+
+              // Set up automatic close timer if duration > 0
+              if (bannerDuration > 0) {
+                autoCloseTimer = setTimeout(closeBanner, bannerDuration * 1000);
+              }
+
+              if (closeBtn) {
+                closeBtn.addEventListener('click', closeBanner);
+              }
+            }
+          } else {
+            // If banners are disabled or empty, let the normal splash screen execute
+            if (bannerContainer) bannerContainer.style.display = 'none';
+            if (splash) {
+              splash.style.display = 'flex';
+            }
+          }
+        }
+      })();
+    </script>
 
     <!-- ── Header ── -->
     <header class="app-header fixed top-0 left-0 right-0 z-50"

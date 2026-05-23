@@ -38,5 +38,12 @@
     "description": "Calendario oficial, grupos y resultados del Mundial FIFA 2026",
     "keywords": "mundial 2026, fifa, calendario, resultados, futbol",
     "ogImage": "/ogimage.png"
-  }
+  },
+  "showBanner": false,
+  "bannerDuration": 3,
+  "banner1url": "/Banner1.webp",
+  "banner2url": "/Banner2.webp",
+  "banner3url": "/Banner3.webp",
+  "banner4url": "/Banner4.webp",
+  "banner5url": "/Banner5.webp"
 }
