@@ -366,16 +366,32 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
             )}
           </div>
           
-          <!-- Dirección y Cómo llegar -->
-          {sponsorInfo.address && sponsorInfo.googleMaps && (
-            <div class="flex flex-col items-center gap-2 mt-2 text-center px-4">
-              <a href={sponsorInfo.googleMaps} target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80" style="color: var(--brand-nav-icon-active, #f59e0b);">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>
-                <span>Cómo llegar</span>
-              </a>
-              <p class="text-xs opacity-80 leading-tight" style="color: var(--brand-nav-text, #fff);">{sponsorInfo.address}</p>
+          <!-- Dirección, Teléfono y Cómo llegar -->
+          {(sponsorInfo.address || sponsorInfo.googleMaps || sponsorInfo.phone) && (
+            <div class="flex flex-col items-center gap-3 mt-4 text-center px-4">
+              {sponsorInfo.address && (
+                <p class="text-xs opacity-80 leading-tight" style="color: var(--brand-nav-text, #fff);">{sponsorInfo.address}</p>
+              )}
+              
+              <div class="flex flex-col w-full gap-2 mt-1">
+                {sponsorInfo.phone && (
+                  <a href={`tel:${sponsorInfo.phone.replace(/[^0-9+]/g, '')}`} class="w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-transform active:scale-95 hover:opacity-90" style="background: var(--brand-nav-icon-active, #f59e0b); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    <span>Llamar</span>
+                  </a>
+                )}
+                
+                {sponsorInfo.googleMaps && (
+                  <a href={sponsorInfo.googleMaps} target="_blank" rel="noopener" class="w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-transform active:scale-95 hover:opacity-90" style="background: var(--brand-nav-icon-active, #f59e0b); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <span>Cómo llegar</span>
+                  </a>
+                )}
+              </div>
             </div>
           )}
         </div>
