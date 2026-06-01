@@ -1,4 +1,6 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import Layout from '../layouts/Layout.astro';
 import sponsorInfo from '../data/sponsor.json';
 import { TEAM_ES, getFlagUrl } from '../lib/worldcup';
@@ -6,6 +8,9 @@ import { TEAM_ES, getFlagUrl } from '../lib/worldcup';
 if (!sponsorInfo.hasQuiniela) {
   return Astro.redirect('/');
 }
+
+const basesPath = path.join(process.cwd(), 'public', 'bases.md');
+const hasBases = fs.existsSync(basesPath);
 
 const now = new Date();
 const endDate = new Date(sponsorInfo.quinielaEndDate || '2026-06-11T23:59:00Z');
@@ -81,6 +86,11 @@ const teams = Object.entries(TEAM_ES)
               <input type="tel" id="telefono" placeholder="Ej. 04141234567" class="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] text-sm outline-none focus:border-[var(--brand-nav-icon-active,#f59e0b)] transition-colors" required />
             </div>
 
+            <div class="space-y-1.5">
+              <label class="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-wider ml-1">Instagram (Obligatorio)</label>
+              <input type="text" id="instagram" placeholder="@usuario" class="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] text-sm outline-none focus:border-[var(--brand-nav-icon-active,#f59e0b)] transition-colors" required />
+            </div>
+
             <div class="h-px w-full bg-[var(--border-subtle)] my-6 opacity-50"></div>
 
             <div class="space-y-1.5">
@@ -113,6 +123,23 @@ const teams = Object.entries(TEAM_ES)
               </div>
             </div>
 
+            {sponsorInfo.includeThirdPlacePrediction && (
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-wider ml-1">🥉 Tercer Lugar</label>
+                <div class="relative flex items-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus-within:border-[var(--brand-nav-icon-active,#f59e0b)] transition-colors pr-4">
+                  <div class="w-12 flex shrink-0 items-center justify-center pl-3 pr-2 border-r border-[var(--border-subtle)]">
+                    <img id="flag-tercer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="w-6 h-4 object-cover rounded-sm" alt="" />
+                  </div>
+                  <select id="tercer-lugar" class="flex-1 bg-transparent px-3 py-3 text-[var(--text-primary)] text-sm outline-none font-medium appearance-none" required>
+                    <option value="" disabled selected>Selecciona el tercer lugar</option>
+                    {teams.map(t => (
+                      <option value={t.id} data-flag={t.flag}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
             <div id="error-message" class="hidden bg-red-500/20 border border-red-500/50 rounded-xl p-3 text-red-200 text-xs text-center font-medium"></div>
 
             <button type="submit" id="submit-btn" class="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold text-sm transition-all active:scale-95 hover:opacity-90 shadow-lg" style="background: var(--brand-nav-icon-active, #f59e0b); color: #fff;">
@@ -126,6 +153,32 @@ const teams = Object.entries(TEAM_ES)
 
         </div>
       )}
+
+      {hasBases && (
+        <div class="mt-6 text-center relative z-10 pb-8">
+          <button type="button" id="open-bases-btn" class="text-[var(--text-secondary)] text-xs font-semibold underline hover:text-[var(--text-primary)] transition-colors">
+            Ver Bases del Concurso
+          </button>
+        </div>
+      )}
+
+      {hasBases && (
+        <div id="bases-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+          <div class="glass w-full max-w-2xl max-h-[80vh] rounded-3xl p-8 flex flex-col relative scale-95 transition-transform duration-300 mx-4 shadow-2xl overflow-hidden border border-[var(--border-subtle)]">
+            <button type="button" id="close-bases-btn" class="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-white bg-black/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors z-10">
+              ✕
+            </button>
+            <div id="bases-content" class="overflow-y-auto pr-4 text-sm text-[var(--text-secondary)] text-left">
+              <div class="flex items-center justify-center py-10">
+                <svg class="w-8 h-8 animate-spin text-[var(--brand-nav-icon-active,#f59e0b)]" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   </section>
 </Layout>
@@ -134,6 +187,55 @@ const teams = Object.entries(TEAM_ES)
   import { supabase } from '../lib/supabase';
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Lógica del modal de Bases
+    const openBasesBtn = document.getElementById('open-bases-btn');
+    const closeBasesBtn = document.getElementById('close-bases-btn');
+    const basesModal = document.getElementById('bases-modal');
+    const basesContent = document.getElementById('bases-content');
+    
+    if (openBasesBtn && basesModal && closeBasesBtn && basesContent) {
+      let isLoaded = false;
+
+      const closeModal = () => {
+        basesModal.classList.add('opacity-0');
+        basesModal.querySelector('.glass')?.classList.add('scale-95');
+        setTimeout(() => basesModal.classList.add('hidden'), 300);
+      };
+
+      openBasesBtn.addEventListener('click', async () => {
+        basesModal.classList.remove('hidden');
+        // Forzar reflow
+        void basesModal.offsetWidth;
+        basesModal.classList.remove('opacity-0');
+        basesModal.querySelector('.glass')?.classList.remove('scale-95');
+        
+        if (!isLoaded) {
+          try {
+            const [res, markedModule] = await Promise.all([
+              fetch('/bases.md'),
+              import('https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js')
+            ]);
+            
+            if (res.ok) {
+              const md = await res.text();
+              const { marked } = markedModule;
+              basesContent.innerHTML = marked.parse(md);
+              isLoaded = true;
+            } else {
+              basesContent.innerHTML = '<p class="text-center text-red-400">No se pudieron cargar las bases.</p>';
+            }
+          } catch (err) {
+            basesContent.innerHTML = '<p class="text-center text-red-400">Error al cargar las bases.</p>';
+          }
+        }
+      });
+
+      closeBasesBtn.addEventListener('click', closeModal);
+      basesModal.addEventListener('click', (e) => {
+        if (e.target === basesModal) closeModal();
+      });
+    }
+
     const form = document.getElementById('quiniela-form') as HTMLFormElement;
     if (!form) return;
 
@@ -144,43 +246,60 @@ const teams = Object.entries(TEAM_ES)
 
     const primerSelect = document.getElementById('primer-lugar') as HTMLSelectElement;
     const segundoSelect = document.getElementById('segundo-lugar') as HTMLSelectElement;
+    const tercerSelect = document.getElementById('tercer-lugar') as HTMLSelectElement | null;
 
     // Prevenir seleccionar el mismo país en ambos lugares y actualizar banderas
     const updateDropdowns = () => {
       const pVal = primerSelect.value;
       const sVal = segundoSelect.value;
+      const tVal = tercerSelect ? tercerSelect.value : null;
 
       // Actualizar banderas
       const pFlag = primerSelect.options[primerSelect.selectedIndex]?.dataset.flag;
       const sFlag = segundoSelect.options[segundoSelect.selectedIndex]?.dataset.flag;
+      const tFlag = tercerSelect ? tercerSelect.options[tercerSelect.selectedIndex]?.dataset.flag : null;
       
       const pImg = document.getElementById('flag-primer') as HTMLImageElement;
       const sImg = document.getElementById('flag-segundo') as HTMLImageElement;
+      const tImg = document.getElementById('flag-tercer') as HTMLImageElement | null;
       
       if (pImg && pFlag) pImg.src = pFlag;
       if (sImg && sFlag) sImg.src = sFlag;
+      if (tImg && tFlag) tImg.src = tFlag;
 
       // Habilitar todas las opciones
       Array.from(primerSelect.options).forEach(opt => opt.disabled = false);
       Array.from(segundoSelect.options).forEach(opt => opt.disabled = false);
+      if (tercerSelect) {
+        Array.from(tercerSelect.options).forEach(opt => opt.disabled = false);
+      }
 
       // Deshabilitar la primera opción (placeholder)
       primerSelect.options[0].disabled = true;
       segundoSelect.options[0].disabled = true;
+      if (tercerSelect) tercerSelect.options[0].disabled = true;
 
-      // Deshabilitar el seleccionado en la otra lista
-      if (pVal) {
-        const opt = segundoSelect.querySelector(`option[value="${pVal}"]`) as HTMLOptionElement;
-        if (opt) opt.disabled = true;
-      }
-      if (sVal) {
-        const opt = primerSelect.querySelector(`option[value="${sVal}"]`) as HTMLOptionElement;
-        if (opt) opt.disabled = true;
-      }
+      // Deshabilitar el seleccionado en las otras listas
+      const selectedValues = [pVal, sVal, tVal].filter(Boolean);
+      selectedValues.forEach(val => {
+        if (val !== pVal) {
+          const opt = primerSelect.querySelector(`option[value="${val}"]`) as HTMLOptionElement;
+          if (opt) opt.disabled = true;
+        }
+        if (val !== sVal) {
+          const opt = segundoSelect.querySelector(`option[value="${val}"]`) as HTMLOptionElement;
+          if (opt) opt.disabled = true;
+        }
+        if (tercerSelect && val !== tVal) {
+          const opt = tercerSelect.querySelector(`option[value="${val}"]`) as HTMLOptionElement;
+          if (opt) opt.disabled = true;
+        }
+      });
     };
 
     primerSelect.addEventListener('change', () => { hideError(); updateDropdowns(); });
     segundoSelect.addEventListener('change', () => { hideError(); updateDropdowns(); });
+    if (tercerSelect) tercerSelect.addEventListener('change', () => { hideError(); updateDropdowns(); });
 
     function showError(msg: string) {
       if (errorDiv) {
@@ -200,8 +319,8 @@ const teams = Object.entries(TEAM_ES)
       e.preventDefault();
       hideError();
 
-      if (primerSelect.value === segundoSelect.value) {
-        showError("El primer y segundo lugar no pueden ser el mismo país.");
+      if (primerSelect.value === segundoSelect.value || (tercerSelect && (tercerSelect.value === primerSelect.value || tercerSelect.value === segundoSelect.value))) {
+        showError("Los países seleccionados no pueden repetirse.");
         return;
       }
 
@@ -213,8 +332,10 @@ const teams = Object.entries(TEAM_ES)
       const nombre = (document.getElementById('nombre') as HTMLInputElement).value;
       const email = (document.getElementById('email') as HTMLInputElement).value;
       const telefono = (document.getElementById('telefono') as HTMLInputElement).value;
+      const instagram = (document.getElementById('instagram') as HTMLInputElement).value;
       const primer_lugar = primerSelect.value;
       const segundo_lugar = segundoSelect.value;
+      const tercer_lugar = tercerSelect ? tercerSelect.value : null;
 
       try {
         submitBtn.disabled = true;
@@ -230,8 +351,10 @@ const teams = Object.entries(TEAM_ES)
               nombre,
               email,
               telefono,
+              instagram_account: instagram,
               primer_lugar,
-              segundo_lugar
+              segundo_lugar,
+              tercer_lugar
             }
           ]);
 
@@ -257,3 +380,15 @@ const teams = Object.entries(TEAM_ES)
     });
   });
 </script>
+
+<style>
+  :global(#bases-content h1) { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); }
+  :global(#bases-content h2) { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-primary); }
+  :global(#bases-content h3) { font-size: 1.125rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+  :global(#bases-content p) { margin-bottom: 1rem; line-height: 1.6; }
+  :global(#bases-content ul) { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+  :global(#bases-content ol) { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
+  :global(#bases-content li) { margin-bottom: 0.5rem; }
+  :global(#bases-content a) { color: var(--brand-nav-icon-active, #f59e0b); text-decoration: underline; }
+  :global(#bases-content strong) { font-weight: 600; color: var(--text-primary); }
+</style>

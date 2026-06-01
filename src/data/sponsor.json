@@ -22,6 +22,7 @@
   "quinielaId": "pauloconde_dev",
   "quinielaEndDate": "2026-06-27T23:59:00Z",
   "quinielaPrizeImage": "/premio.png",
+  "includeThirdPlacePrediction": true,
   "theme": "dark",
   "colors": {
     "appBg": "#080210",
@@ -43,10 +44,10 @@
     "ogImage": "/ogimage.png"
   },
   "showBanner": false,
-  "bannerDuration": 3,
-  "banner1url": "/Banner1.webp",
-  "banner2url": "/Banner2.webp",
-  "banner3url": "/Banner3.webp",
-  "banner4url": "/Banner4.webp",
-  "banner5url": "/Banner5.webp"
+  "bannerDuration": 5,
+  "banner1url": "",
+  "banner2url": "",
+  "banner3url": "",
+  "banner4url": "",
+  "banner5url": ""
 }

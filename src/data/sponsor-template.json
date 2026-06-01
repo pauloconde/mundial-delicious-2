@@ -22,6 +22,7 @@
   "quinielaId": "",
   "quinielaEndDate": "2026-06-11T23:59:00Z",
   "quinielaPrizeImage": "/premio.png",
+  "includeThirdPlacePrediction": false,
   "theme": "dark",
   "colors": {
     "appBg": "#080210",
