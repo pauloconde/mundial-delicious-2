@@ -23,6 +23,8 @@
   "quinielaEndDate": "2026-06-27T23:59:00Z",
   "quinielaPrizeImage": "/laeconomica-premio.webp",
   "includeThirdPlacePrediction": true,
+  "quinielaRequireReceipt": true,
+  "quinielaPredictFinalScore": true,
   "theme": "dark",
   "colors": {
     "appBg": "#080210",

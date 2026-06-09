@@ -4,6 +4,7 @@ import { fetchWorldCupData, getMatchUTC } from '../lib/worldcup';
 import sponsorInfo from '../data/sponsor.json';
 import InstallIOSGuide from '../components/InstallIOSGuide.astro';
 import MatchDetailDrawer from '../components/MatchDetailDrawer.astro';
+import pkg from '../../package.json';
 // @ts-ignore
 import { pwaInfo } from 'virtual:pwa-info';
 
@@ -498,7 +499,7 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
       </div>
 
       <!-- Footer del drawer -->
-      <div class="px-5 py-1 pb-4">
+      <div class="px-5 py-1 pb-4 relative flex flex-col items-center">
         <p class="text-[11px] text-center text-[var(--text-secondary)] relative z-10">
           Desarrollado para <a href={sponsorInfo.website} target="_blank" rel="noopener" class="text-[var(--text-primary)] font-semibold hover:underline" style="color: var(--brand-nav-icon-active, #f59e0b);">{sponsorInfo.name}</a> por
         </p>
@@ -507,6 +508,9 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
             <img src="/paulocondedev.png" alt="pauloconde.dev" class="h-32 w-auto object-contain" />
           </a>
         </div>
+        <p class="absolute bottom-4 left-5 text-[9px] text-[var(--text-secondary)] opacity-60 z-10">
+          v{pkg.version}
+        </p>
       </div>
     </aside>
 
