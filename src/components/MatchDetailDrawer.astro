@@ -171,7 +171,7 @@ import sponsorInfo from '../data/sponsor.json';
 <!-- ── Script cliente: Gestión de drawer y Supabase Realtime ── -->
 <script>
   import { supabase } from '../lib/supabase';
-  import { translateTeam, getFlagUrl } from '../lib/worldcup';
+  import { translateTeam, getFlagUrl, VENUES } from '../lib/worldcup';
 
   function formatLocalMatchDateTime(isoStr: string) {
     try {
@@ -199,6 +199,33 @@ import sponsorInfo from '../data/sponsor.json';
   let cronometroInterval: any = null;
   let localEventos: any[] = [];
   let audioCtx: any = null;
+  let currentPartido: any = null;
+
+  function formatVenue(partido: any) {
+    if (!partido) return '';
+    
+    // 1. Si tenemos el objeto de relación 'sedes' completo
+    const sedeObj = partido.sedes;
+    if (sedeObj && sedeObj.nombre_estadio) {
+      return `${sedeObj.nombre_estadio} (${sedeObj.ciudad_es || sedeObj.ciudad_en || ''})`;
+    }
+    
+    // 2. Si no, buscar por sede_id o ground en la lista estática de VENUES
+    const searchKey = partido.sede_id || partido.ground;
+    if (searchKey) {
+      const staticVenue = VENUES.find(v => 
+        v.imageKey === searchKey || 
+        v.cityEn.toLowerCase() === searchKey.toLowerCase() ||
+        v.name.toLowerCase() === searchKey.toLowerCase()
+      );
+      if (staticVenue) {
+        return `${staticVenue.name} (${staticVenue.cityEs})`;
+      }
+    }
+    
+    // 3. Fallback final al ID original o 'Sede no definida'
+    return partido.sede_id || partido.ground || 'Sede no definida';
+  }
 
   function initAudioContext() {
     try {
@@ -378,6 +405,7 @@ import sponsorInfo from '../data/sponsor.json';
     if (emptyState) emptyState.classList.add('hidden');
     if (reconnectingBadge) reconnectingBadge.classList.add('hidden');
     if (penaltiesScore) penaltiesScore.classList.add('hidden');
+    currentPartido = null;
   }
 
   // Cerrar eventos
@@ -404,6 +432,8 @@ import sponsorInfo from '../data/sponsor.json';
         .single();
 
       if (pError) throw pError;
+
+      currentPartido = partido;
 
       // 2. Obtener eventos iniciales del partido
       const { data: eventos, error: eError } = await supabase
@@ -448,9 +478,7 @@ import sponsorInfo from '../data/sponsor.json';
 
     // Sede
     if (venueName) {
-      venueName.textContent = partido.sedes 
-        ? `${partido.sedes.nombre_estadio} (${partido.sedes.ciudad_es})`
-        : partido.sede_id;
+      venueName.textContent = formatVenue(partido);
     }
 
     // Fecha
@@ -717,7 +745,12 @@ import sponsorInfo from '../data/sponsor.json';
         filter: `id=eq.${matchId}`
       }, (payload: any) => {
         console.log("Realtime Match update received:", payload.new);
-        renderHeader(payload.new);
+        if (currentPartido) {
+          currentPartido = { ...currentPartido, ...payload.new };
+          renderHeader(currentPartido);
+        } else {
+          renderHeader(payload.new);
+        }
       })
       .subscribe((status: string) => {
         console.log("Match subscription status:", status);
