@@ -1,0 +1,492 @@
+---
+// src/pages/equipos.astro
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+import { getFlagUrl, fetchWorldCupData, calculateGroupStandings } from '../lib/worldcup';
+
+// 1. Obtener equipos ordenados por nombre en español
+const { data: teamsRaw, error: teamsError } = await supabase
+  .from('equipos')
+  .select('*')
+  .order('nombre_es', { ascending: true });
+
+// 2. Obtener todos los jugadores ordenados por nombre
+const { data: playersRaw, error: playersError } = await supabase
+  .from('jugadores')
+  .select('*')
+  .order('nombre', { ascending: true });
+
+// 3. Obtener todos los entrenadores
+const { data: coachesRaw, error: coachesError } = await supabase
+  .from('entrenadores')
+  .select('*');
+
+if (teamsError) console.error("Error al obtener equipos:", teamsError);
+if (playersError) console.error("Error al obtener jugadores:", playersError);
+if (coachesError) console.error("Error al obtener entrenadores:", coachesError);
+
+const teams = (teamsRaw || []).filter(t => /^[A-Z]{3}$/.test(t.codigo_fifa)).map(t => ({
+  ...t,
+  flagUrl: getFlagUrl(t.codigo_fifa)
+}));
+const players = playersRaw || [];
+const coaches = coachesRaw || [];
+
+// Map coaches by team code
+const coachesByTeam: Record<string, any> = {};
+coaches.forEach(c => {
+  coachesByTeam[c.equipo_id] = c;
+});
+
+// 3. Agrupar jugadores por equipo_id
+const playersByTeam: Record<string, any[]> = {};
+players.forEach(p => {
+  if (!playersByTeam[p.equipo_id]) {
+    playersByTeam[p.equipo_id] = [];
+  }
+  playersByTeam[p.equipo_id].push(p);
+});
+
+// 4. Obtener grupos a partir de la data de partidos
+const wcData = await fetchWorldCupData();
+const standings = calculateGroupStandings(wcData);
+const teamGroups: Record<string, string> = {};
+standings.forEach(g => {
+  g.teams.forEach(t => {
+    teamGroups[t.team] = g.group; // e.g. "A", "B", ...
+  });
+});
+
+// Ordenar grupos válidos (A hasta L)
+const groupsList = Array.from(new Set(Object.values(teamGroups))).sort();
+---
+
+<Layout title="Equipos" page="equipos">
+  <div class="px-4 py-6 max-w-lg mx-auto pb-24">
+    
+    <!-- ── CABECERA / HERO ── -->
+    <div class="text-center mb-6 mt-2">
+      <h1 class="font-['Outfit'] font-black text-3xl text-[var(--text-primary)] tracking-tight">
+        Selecciones Convocadas
+      </h1>
+      <p class="text-[var(--text-secondary)] text-xs mt-1">
+        Explora los planteles y jugadores del Mundial 2026
+      </p>
+    </div>
+
+    <!-- ── BUSCADOR & FILTROS ── -->
+    <div class="space-y-4 mb-6">
+      <!-- Barra de búsqueda -->
+      <div class="relative flex items-center w-full">
+        <div class="absolute pointer-events-none text-gray-500 flex items-center justify-center z-10" style="left: 1.25rem;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Buscar selección o jugador..." 
+          style="padding-left: 3.25rem; padding-right: 1rem; padding-top: 0.75rem; padding-bottom: 0.75rem;"
+          class="w-full bg-white/5 border border-white/10 rounded-2xl text-sm text-[var(--text-primary)] placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all shadow-inner"
+        />
+      </div>
+
+      <!-- Filtro por Grupos (Chips Deslizables) -->
+      <div class="w-full overflow-x-auto py-1 custom-scrollbar">
+        <div class="flex gap-2 w-max px-1" id="groups-filter-container">
+          <button 
+            data-group="all" 
+            class="group-chip active-chip text-xs font-bold px-4 py-2 rounded-xl border transition-all cursor-pointer"
+          >
+            Todos
+          </button>
+          {groupsList.map(group => (
+            <button 
+              data-group={group} 
+              class="group-chip inactive-chip text-xs font-bold px-4 py-2 rounded-xl border transition-all cursor-pointer"
+            >
+              {group}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GRID DE EQUIPOS ── -->
+    <div class="grid grid-cols-2 gap-3.5" id="teams-grid">
+      {teams.map(team => {
+        const squad = playersByTeam[team.codigo_fifa] || [];
+        const group = teamGroups[team.codigo_fifa] || 'Fase Final';
+        
+        return (
+          <button
+            class="team-card text-left glass p-4 rounded-3xl border border-white/5 flex flex-col gap-3 relative transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98]"
+            data-id={team.codigo_fifa}
+            data-name={team.nombre_es.toLowerCase()}
+            data-group={group}
+            data-players={JSON.stringify(squad.map(p => p.nombre.toLowerCase()))}
+          >
+            <!-- Bandera SVG con sombra -->
+            <div class="relative shadow-md overflow-hidden rounded-md w-14 h-9 border border-white/10 shrink-0">
+              <img 
+                src={team.flagUrl} 
+                alt={team.nombre_es} 
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+
+            <!-- Detalles del País -->
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 justify-between">
+                <h3 class="font-bold text-sm text-[var(--text-primary)] truncate flex-1">
+                  {team.nombre_es}
+                </h3>
+                <span class="text-[10px] font-black text-amber-500 shrink-0 uppercase tracking-wider bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  {team.codigo_fifa}
+                </span>
+              </div>
+              
+              <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-[11px] text-[var(--text-secondary)]">
+                <span class="font-medium">{group}</span>
+                <span class="font-bold text-[var(--text-primary)] bg-white/5 px-2 py-0.5 rounded-full">
+                  {squad.length} jug.
+                </span>
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+
+    <!-- Empty state para búsquedas sin resultados -->
+    <div id="search-empty-state" class="hidden flex-col items-center justify-center py-16 text-center">
+      <span class="text-4xl mb-3">🔍</span>
+      <p class="text-sm font-semibold text-[var(--text-primary)]">No se encontraron selecciones o jugadores</p>
+      <p class="text-xs text-[var(--text-secondary)] mt-1">Prueba escribiendo otro nombre o código FIFA</p>
+    </div>
+
+  </div>
+
+  <!-- ── SQUAD DETAIL DRAWER (SLIDE-UP) ── -->
+  <div id="squad-drawer-backdrop"
+       class="fixed inset-0 z-[8500] bg-black/75 backdrop-blur-sm"
+       style="display:none; opacity:0; transition: opacity 0.3s;"
+       aria-hidden="true"></div>
+
+  <div id="squad-drawer-panel"
+       class="fixed bottom-0 left-0 right-0 z-[8501] max-w-lg mx-auto rounded-t-[2.5rem] flex flex-col transition-transform duration-350 ease-out"
+       style="background: #0a0e1a; color: #f9fafb; border-top: 1px solid rgba(255, 255, 255, 0.08); transform: translateY(100%); max-height: 85vh; min-height: 50vh;">
+    
+    <!-- Barra tiradora superior -->
+    <div class="w-full flex justify-center py-3 shrink-0 cursor-grab active:cursor-grabbing">
+      <div class="w-12 h-1.5 rounded-full bg-gray-600/40"></div>
+    </div>
+
+    <!-- Botón de Cerrar -->
+    <button id="squad-drawer-close"
+            class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400"
+            aria-label="Cerrar plantel">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <!-- Contenido del Drawer -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- CABECERA: Info de la selección -->
+      <div class="px-6 pb-4 border-b border-white/5 relative overflow-hidden shrink-0 flex items-center gap-4">
+        <div class="relative w-20 h-14 rounded-lg shadow-lg border border-white/15 overflow-hidden shrink-0">
+          <img id="drawer-team-flag" src="" alt="Bandera" class="w-full h-full object-cover" />
+        </div>
+        <div class="min-w-0">
+          <h2 id="drawer-team-name" class="font-['Outfit'] font-black text-2xl text-[var(--text-primary)] tracking-tight truncate">
+            Nombre Selección
+          </h2>
+          <p class="text-xs text-[var(--text-secondary)] font-medium mt-0.5 flex items-center gap-1.5">
+            <span id="drawer-team-group">Grupo A</span>
+            <span class="w-1 h-1 rounded-full bg-white/20"></span>
+            <span id="drawer-team-count">0</span> convocados
+          </p>
+          <div id="drawer-team-coach-container" class="mt-2 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg w-fit">
+            <span class="text-[10px]">👔</span>
+            <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">DT:</span>
+            <span id="drawer-team-coach" class="text-[11px] font-bold text-white">Nombre Entrenador</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTA DE JUGADORES (Scrollable) -->
+      <div class="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar space-y-6" id="drawer-players-list">
+        <!-- Generado dinámicamente -->
+      </div>
+    </div>
+
+    <!-- Espacio de seguridad inferior -->
+    <div class="h-safe-bottom shrink-0 bg-[#0a0e1a]" style="height: max(1.5rem, env(safe-area-inset-bottom, 1.5rem));"></div>
+  </div>
+</Layout>
+
+<style>
+  /* Personalización de scroll y chips */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .group-chip {
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .active-chip {
+    background: var(--brand-nav-icon-active, #f59e0b);
+    color: #fff;
+    border-color: var(--brand-nav-icon-active, #f59e0b);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  }
+  .inactive-chip {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .inactive-chip:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-primary);
+  }
+  
+  /* Efecto glassmorphism premium */
+  .glass {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+</style>
+
+<!-- ── Cliente JS: Filtrado y Drawer ── -->
+<script define:vars={{ playersByTeam, teamGroups, teams, coachesByTeam }}>
+  // Mapeo de posiciones para la UI
+  const POSITION_CONFIG = {
+    'PO': { label: 'Porteros', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', icon: '🧤' },
+    'DF': { label: 'Defensas', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20', icon: '🛡️' },
+    'MC': { label: 'Mediocampistas', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', icon: '🧠' },
+    'DC': { label: 'Delanteros', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20', icon: '⚡' }
+  };
+
+  const POSITION_ORDER = ['PO', 'DF', 'MC', 'DC'];
+
+  // Calcular la edad a partir del cumpleaños ISO
+  function calculateAge(birthDateStr) {
+    if (!birthDateStr) return null;
+    const birthday = new Date(birthDateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const m = today.getMonth() - birthday.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  // Filtrado e Input de búsqueda
+  const searchInput = document.getElementById('search-input');
+  const teamCards = document.querySelectorAll('.team-card');
+  const emptyState = document.getElementById('search-empty-state');
+  const chips = document.querySelectorAll('.group-chip');
+  
+  let currentSearch = '';
+  let currentGroupFilter = 'all';
+
+  function applyFilters() {
+    let visibleCount = 0;
+    
+    teamCards.forEach(card => {
+      const name = card.getAttribute('data-name') || '';
+      const code = (card.getAttribute('data-id') || '').toLowerCase();
+      const group = card.getAttribute('data-group') || '';
+      const matchesSearch = name.includes(currentSearch) || 
+                            code.includes(currentSearch);
+      const matchesGroup = currentGroupFilter === 'all' || group === currentGroupFilter;
+      
+      if (matchesSearch && matchesGroup) {
+        card.style.display = 'flex';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (visibleCount === 0) {
+      emptyState.classList.remove('hidden');
+      emptyState.classList.add('flex');
+    } else {
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+    }
+  }
+
+  // Escuchadores del buscador
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value.toLowerCase().trim();
+      applyFilters();
+    });
+  }
+
+  // Escuchadores de chips de grupos
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => {
+        c.classList.remove('active-chip');
+        c.classList.add('inactive-chip');
+      });
+      chip.classList.add('active-chip');
+      chip.classList.remove('inactive-chip');
+
+      currentGroupFilter = chip.getAttribute('data-group') || 'all';
+      applyFilters();
+    });
+  });
+
+  // Drawer de Planteles (Lógica de Apertura/Cierre)
+  const backdrop = document.getElementById('squad-drawer-backdrop');
+  const panel = document.getElementById('squad-drawer-panel');
+  const closeBtn = document.getElementById('squad-drawer-close');
+  
+  const drawerFlag = document.getElementById('drawer-team-flag');
+  const drawerName = document.getElementById('drawer-team-name');
+  const drawerGroup = document.getElementById('drawer-team-group');
+  const drawerCount = document.getElementById('drawer-team-count');
+  const drawerPlayersList = document.getElementById('drawer-players-list');
+
+  function openDrawer(teamCode) {
+    const team = teams.find(t => t.codigo_fifa === teamCode);
+    if (!team || !panel || !backdrop) return;
+
+    const squad = playersByTeam[teamCode] || [];
+    const group = teamGroups[teamCode] || 'Fase Final';
+
+    // Rellenar cabecera del drawer
+    if (drawerFlag) drawerFlag.src = team.flagUrl;
+    if (drawerName) drawerName.textContent = team.nombre_es;
+    if (drawerGroup) drawerGroup.textContent = group;
+    if (drawerCount) drawerCount.textContent = squad.length;
+
+    // Rellenar DT/Entrenador
+    const coach = coachesByTeam[teamCode];
+    const coachContainer = document.getElementById('drawer-team-coach-container');
+    const coachSpan = document.getElementById('drawer-team-coach');
+    if (coach) {
+      if (coachSpan) coachSpan.textContent = coach.nombre;
+      if (coachContainer) coachContainer.style.display = 'flex';
+    } else {
+      if (coachContainer) coachContainer.style.display = 'none';
+    }
+
+    // Rellenar lista de convocados agrupada por posición
+    if (drawerPlayersList) {
+      drawerPlayersList.innerHTML = '';
+      
+      // Agrupar jugadores de la plantilla
+      const grouped = { PO: [], DF: [], MC: [], DC: [] };
+      squad.forEach(p => {
+        const pos = p.posicion || 'MC';
+        if (grouped[pos]) grouped[pos].push(p);
+      });
+
+      // Insertar secciones por orden tradicional de juego
+      POSITION_ORDER.forEach(posCode => {
+        const list = grouped[posCode];
+        if (!list || list.length === 0) return;
+
+        const config = POSITION_CONFIG[posCode];
+
+        // Título de la Sección de Posición
+        const sectionHeader = document.createElement('div');
+        sectionHeader.className = 'flex items-center gap-2 mt-4 mb-3 select-none shrink-0';
+        sectionHeader.innerHTML = `
+          <span class="text-sm">${config.icon}</span>
+          <span class="text-xs font-black uppercase tracking-widest text-gray-400">${config.label}</span>
+          <div class="flex-1 h-[1px] bg-white/5"></div>
+          <span class="text-[10px] font-bold text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">${list.length}</span>
+        `;
+        drawerPlayersList.appendChild(sectionHeader);
+
+        // Listado de Jugadores
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 gap-2.5';
+
+        list.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'glass p-3.5 rounded-2xl border border-white/5 flex items-center justify-between gap-4';
+
+          const age = calculateAge(p.fecha_nacimiento);
+          const heightFormatted = p.estatura ? `${(p.estatura / 100).toFixed(2)} m` : null;
+
+          card.innerHTML = `
+            <div class="min-w-0 flex-1">
+              <p class="font-bold text-sm text-white truncate">${p.nombre}</p>
+              <div class="flex items-center gap-1.5 mt-1 text-gray-400 text-xs truncate">
+                <svg class="w-3.5 h-3.5 shrink-0 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span class="truncate">${p.club || 'Sin club'}</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${age ? `<span class="text-[10px] font-bold bg-white/5 border border-white/5 text-gray-300 px-2 py-1 rounded-lg">${age} años</span>` : ''}
+              ${heightFormatted ? `<span class="text-[10px] font-bold bg-white/5 border border-white/5 text-gray-300 px-2 py-1 rounded-lg">${heightFormatted}</span>` : ''}
+              <span class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border ${config.color}">${posCode}</span>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+        drawerPlayersList.appendChild(grid);
+      });
+    }
+
+    // Animación de deslizamiento
+    backdrop.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    void backdrop.offsetWidth; // Reflow
+    backdrop.style.opacity = '1';
+    panel.style.transform = 'translateY(0)';
+  }
+
+  function closeDrawer() {
+    if (!backdrop || !panel) return;
+    backdrop.style.opacity = '0';
+    panel.style.transform = 'translateY(100%)';
+    setTimeout(() => {
+      backdrop.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 350);
+  }
+
+  // Escuchador de clic en tarjetas de países
+  teamCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-id');
+      if (id) openDrawer(id);
+    });
+  });
+
+  // Cerrar Drawer
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+  if (backdrop) backdrop.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDrawer();
+  });
+</script>

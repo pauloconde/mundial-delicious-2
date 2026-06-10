@@ -11,7 +11,7 @@ import { pwaInfo } from 'virtual:pwa-info';
 interface Props {
   title?: string;
   description?: string;
-  page?: 'home' | 'grupos' | 'estadios' | 'calendario' | 'quiniela';
+  page?: 'home' | 'grupos' | 'estadios' | 'calendario' | 'quiniela' | 'equipos';
 }
 
 const {
@@ -486,6 +486,13 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
             <span class="font-semibold text-sm">Calendario</span>
           </a>
           
+          <a href="/equipos" class={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-colors ${page === 'equipos' ? 'bg-black/5 text-[var(--brand-nav-icon-active,#f59e0b)]' : 'hover:bg-black/5'}`}>
+            <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="font-semibold text-sm">Equipos</span>
+          </a>
+
           {sponsorInfo.hasQuiniela && (
             <a href="/quiniela" class={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-colors ${page === 'quiniela' ? 'bg-black/5 text-[var(--brand-nav-icon-active,#f59e0b)]' : 'hover:bg-black/5'}`}>
               <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -755,6 +762,14 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
             <line x1="3" y1="10" x2="21" y2="10" stroke-linecap="round"/>
           </svg>
           <span class="nav-label text-[10px] font-semibold">Calendario</span>
+        </a>
+
+        <a href="/equipos" id="nav-equipos"
+           class={`app-nav-item flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-all duration-200 ${page === 'equipos' ? 'nav-active' : ''}`}>
+          <svg class="nav-icon w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span class="nav-label text-[10px] font-semibold">Equipos</span>
         </a>
 
         {sponsorInfo.hasQuiniela && (
