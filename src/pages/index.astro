@@ -72,6 +72,7 @@ const nextMatchUTC = nextMatch ? getMatchUTC(nextMatch) : null;
              data-cronometro-corriendo={nextMatch.cronometro_corriendo ? 'true' : 'false'}
              data-hora-inicio-periodo={nextMatch.hora_inicio_periodo || ''}
              data-tiempo-adicional={nextMatch.tiempo_adicional ?? 0}
+             data-periodo-actual={nextMatch.periodo_actual || ''}
              style="cursor: pointer;"
              onclick={`window.openMatchDetailDrawer && window.openMatchDetailDrawer('${nextMatch.id}')`}>
           <div class="flex items-center justify-between gap-4">
@@ -102,9 +103,9 @@ const nextMatchUTC = nextMatch ? getMatchUTC(nextMatch) : null;
                   {nextMatch.estado === 'en_curso' && (
                     <div class="flex items-center justify-center gap-1 mt-1">
                       <span class="text-xs font-bold text-amber-500 animate-pulse match-card-minute-display">
-                        {(nextMatch.minuto_actual ?? 0) > 120 ? 'Penales' : `${nextMatch.minuto_actual}'`}
+                        {nextMatch.periodo_actual === 'PEN' ? "120' (Penales)" : ((nextMatch.minuto_actual ?? 0) > 120 ? 'Penales' : `${nextMatch.minuto_actual}'`)}
                       </span>
-                      {nextMatch.tiempo_adicional && nextMatch.tiempo_adicional > 0 && (nextMatch.minuto_actual ?? 0) <= 120 ? (
+                      {nextMatch.tiempo_adicional && nextMatch.tiempo_adicional > 0 && (nextMatch.minuto_actual ?? 0) <= 120 && nextMatch.periodo_actual !== 'PEN' ? (
                         <span class="match-card-stoppage-display ml-1.5 text-[9px] font-black bg-red-500/15 text-red-400 border border-red-500/20 px-1 rounded inline-block">
                           +{nextMatch.tiempo_adicional}
                         </span>
@@ -225,6 +226,7 @@ const nextMatchUTC = nextMatch ? getMatchUTC(nextMatch) : null;
                    data-cronometro-corriendo={match.cronometro_corriendo ? 'true' : 'false'}
                    data-hora-inicio-periodo={match.hora_inicio_periodo || ''}
                    data-tiempo-adicional={match.tiempo_adicional ?? 0}
+                   data-periodo-actual={match.periodo_actual || ''}
                    style="cursor: pointer;"
                    onclick={`window.openMatchDetailDrawer && window.openMatchDetailDrawer('${match.id}')`}>
                 {match.group && (
@@ -258,9 +260,9 @@ const nextMatchUTC = nextMatch ? getMatchUTC(nextMatch) : null;
                         {match.estado === 'en_curso' && (
                           <div class="flex items-center justify-center gap-1 mt-0.5">
                             <span class="text-[10px] font-bold text-amber-500 animate-pulse match-card-minute-display">
-                              {(match.minuto_actual ?? 0) > 120 ? 'Penales' : `${match.minuto_actual}'`}
+                              {match.periodo_actual === 'PEN' ? "120' (Penales)" : ((match.minuto_actual ?? 0) > 120 ? 'Penales' : `${match.minuto_actual}'`)}
                             </span>
-                            {match.tiempo_adicional && match.tiempo_adicional > 0 && (match.minuto_actual ?? 0) <= 120 ? (
+                            {match.tiempo_adicional && match.tiempo_adicional > 0 && (match.minuto_actual ?? 0) <= 120 && match.periodo_actual !== 'PEN' ? (
                               <span class="match-card-stoppage-display ml-1 text-[8px] font-black bg-red-500/15 text-red-400 border border-red-500/20 px-1 rounded inline-block">
                                 +{match.tiempo_adicional}
                               </span>

@@ -131,6 +131,7 @@ const anchorsShown  = new Set<string>();
                  data-cronometro-corriendo={match.cronometro_corriendo ? 'true' : 'false'}
                  data-hora-inicio-periodo={match.hora_inicio_periodo || ''}
                  data-tiempo-adicional={match.tiempo_adicional ?? 0}
+                 data-periodo-actual={match.periodo_actual || ''}
                      onclick={`window.openMatchDetailDrawer && window.openMatchDetailDrawer('${match.id}')`}>
               <div class="flex items-center gap-3">
 
@@ -139,9 +140,9 @@ const anchorsShown  = new Set<string>();
                   {match.estado === 'en_curso' ? (
                     <div class="flex items-center justify-center gap-1">
                       <span class="text-xs font-bold text-amber-500 animate-pulse match-card-minute-display">
-                        {match.minuto_actual}'
+                        {match.periodo_actual === 'PEN' ? "120' (Penales)" : `${match.minuto_actual}'`}
                       </span>
-                      {match.tiempo_adicional && match.tiempo_adicional > 0 ? (
+                      {match.tiempo_adicional && match.tiempo_adicional > 0 && match.periodo_actual !== 'PEN' ? (
                         <span class="match-card-stoppage-display ml-1 text-[8px] font-black bg-red-500/15 text-red-400 border border-red-500/20 px-1 rounded inline-block">
                           +{match.tiempo_adicional}
                         </span>

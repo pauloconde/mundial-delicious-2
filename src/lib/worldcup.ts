@@ -41,6 +41,7 @@ export interface Match {
   tiempo_adicional?: number;
   penales_team1?: number | null;
   penales_team2?: number | null;
+  periodo_actual?: string | null;
 }
 
 export interface MatchEvent {
@@ -297,7 +298,8 @@ export async function fetchWorldCupData(): Promise<WorldCupData> {
         cronometro_corriendo: m.cronometro_corriendo,
         tiempo_adicional: m.tiempo_adicional,
         penales_team1: m.penales_team1,
-        penales_team2: m.penales_team2
+        penales_team2: m.penales_team2,
+        periodo_actual: m.periodo_actual
       };
     });
 

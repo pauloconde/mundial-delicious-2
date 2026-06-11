@@ -971,6 +971,7 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
         card.dataset.cronometroCorriendo = match.cronometro_corriendo ? 'true' : 'false';
         card.dataset.horaInicioPeriodo = match.hora_inicio_periodo || '';
         card.dataset.tiempoAdicional = String(match.tiempo_adicional || 0);
+        card.dataset.periodoActual = match.periodo_actual || '';
 
         // 1. Actualizar Nombres de Equipos y Banderas
         const t1Span = card.querySelector('.team1-name-span');
@@ -1051,8 +1052,8 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
             if (!statusContainer || isHero || isCarousel) {
               if (match.estado === 'en_curso') {
                 const min = match.minuto_actual || 0;
-                const minText = min > 120 ? 'Penales' : `${min}'`;
-                const stoppageText = (match.tiempo_adicional > 0 && min <= 120) ? `
+                const minText = match.periodo_actual === 'PEN' ? "120' (Penales)" : (min > 120 ? 'Penales' : `${min}'`);
+                const stoppageText = (match.tiempo_adicional > 0 && min <= 120 && match.periodo_actual !== 'PEN') ? `
                   <span class="match-card-stoppage-display ml-1.5 text-[9px] font-black bg-red-500/15 text-red-400 border border-red-500/20 px-1 rounded inline-block">
                     +${match.tiempo_adicional}
                   </span>
@@ -1079,7 +1080,14 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
           let statusHtml = '';
           if (match.estado === 'en_curso') {
             const min = match.minuto_actual || 0;
-            if (min > 120) {
+            if (match.periodo_actual === 'PEN') {
+              statusHtml = `
+                <span class="text-[8px] font-bold px-1.5 py-0.5 rounded-full inline-block animate-pulse"
+                      style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">
+                  PENALES
+                </span>
+              `;
+            } else if (min > 120) {
               statusHtml = `
                 <span class="text-[8px] font-bold px-1.5 py-0.5 rounded-full inline-block animate-pulse"
                       style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">
@@ -1194,9 +1202,12 @@ const kickoffISOs = data.matches.map(m => getMatchUTC(m));
           const horaInicioIso = htmlCard.dataset.horaInicioPeriodo;
           const minutoBase = parseInt(htmlCard.dataset.minutoActual || '0', 10);
           const tiempoAdicional = parseInt(htmlCard.dataset.tiempoAdicional || '0', 10);
+          const periodoActual = htmlCard.dataset.periodoActual || '';
 
           let displayText = "";
-          if (cronometroCorriendo && horaInicioIso) {
+          if (periodoActual === 'PEN') {
+            displayText = "120' (Penales)";
+          } else if (cronometroCorriendo && horaInicioIso) {
             const startTime = new Date(horaInicioIso).getTime();
             const diffMs = Date.now() - startTime;
             const elapsedMins = Math.floor(diffMs / 60000);

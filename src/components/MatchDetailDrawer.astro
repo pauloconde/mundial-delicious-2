@@ -545,10 +545,21 @@ import sponsorInfo from '../data/sponsor.json';
           minuteCounter.classList.add('text-amber-500', 'animate-pulse', 'font-bold');
           
           const min = partido.minuto_actual || 0;
-          if (min > 120) {
-            minuteCounter.textContent = "Tanda de Penaltis";
+          const enPenales = partido.penales_team1 !== null && partido.penales_team1 !== undefined
+                         && partido.penales_team2 !== null && partido.penales_team2 !== undefined;
+
+          if (enPenales) {
+            // Matar el cronómetro definitivamente al entrar en penales
+            if (cronometroInterval) {
+              clearInterval(cronometroInterval);
+              cronometroInterval = null;
+            }
+            minuteCounter.textContent = "120' (Penales)";
             minuteCounter.classList.remove('animate-pulse');
-            if (stoppageBadge) stoppageBadge.classList.add('hidden');
+            if (stoppageBadge) {
+              stoppageBadge.classList.add('hidden');
+              stoppageBadge.textContent = '';
+            }
           } else if (partido.cronometro_corriendo && partido.hora_inicio_periodo) {
             updateStopwatchDisplay(min, partido.hora_inicio_periodo, partido.tiempo_adicional || 0);
           } else {
