@@ -23,11 +23,6 @@
   "quinielaEndDate": "2026-06-11T23:59:00Z",
   "quinielaPrizeImage": "/premios.webp",
   "includeThirdPlacePrediction": false,
-  "quinielaRequireReceipt": true,
-  "quinielaPredictFinalScore": true,
-  "FixedMatchEnabled": false,
-  "FixedMatchTeamA": "",
-  "FixedMatchTeamB": "",
   "theme": "dark",
   "colors": {
     "appBg": "#600022",
