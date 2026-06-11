@@ -553,7 +553,7 @@ import sponsorInfo from '../data/sponsor.json';
             updateStopwatchDisplay(min, partido.hora_inicio_periodo, partido.tiempo_adicional || 0);
           } else {
             // Pausado (ej: entretiempo)
-            minuteCounter.textContent = `${min}' (Pausa)`;
+            minuteCounter.textContent = `${min}' (Entretiempo)`;
             minuteCounter.classList.remove('animate-pulse');
           }
         }
